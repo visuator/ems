@@ -5,16 +5,32 @@ services:
       context: "C:\\Users\\Workstation\\RiderProjects\\EducationManagementSystem"
       dockerfile: "EducationManagementSystem/Dockerfile"
       target: "base"
+      args:
+        BUILD_CONFIGURATION: "Debug"
     command: []
     entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/EducationManagementSystem.dll"
+    - "/opt/rider-debugger/linux-x64/JetBrains.Debugger.Worker"
+    - "--runtimeconfig"
+    - "/opt/rider-debugger/JetBrains.Debugger.Worker.runtimeconfig.json"
+    - "--mode=server"
+    - "--frontend-port=57100"
+    - "--backend-port=57300"
+    - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
+      RIDER_DEBUGGER_LOG_DIR: "/var/opt/rider-debugger"
+      RESHARPER_LOG_CONF: "/etc/opt/rider-debugger/backend-log.xml"
     image: "educationmanagementsystem:dev"
-    ports: []
+    ports:
+    - "127.0.0.1:57002:57100"
+    - "127.0.0.1:63672:57300"
     volumes:
     - "C:\\Users\\Workstation\\.nuget\\packages:/home/app/.nuget/packages"
     - "C:\\Users\\Workstation\\RiderProjects\\EducationManagementSystem\\EducationManagementSystem:/app:rw"
     - "C:\\Users\\Workstation\\RiderProjects\\EducationManagementSystem:/src:rw"
+    - "C:\\Users\\Workstation\\AppData\\Local\\JetBrains\\RiderRemoteDebugger\\2024.1.2\\\
+      Linux64:/opt/rider-debugger"
+    - "C:\\Program Files\\JetBrains\\JetBrains Rider 2024.1.2\\bin:/etc/opt/rider-debugger/backend-log.xml"
+    - "C:\\Users\\Workstation\\AppData\\Local\\JetBrains\\Rider2024.1\\log\\DebuggerWorker\\\
+      JetBrains.Debugger.Worker.2024_5_28_20_39_26:/var/opt/rider-debugger:rw"
     working_dir: "/app"

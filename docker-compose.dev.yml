@@ -1,5 +1,8 @@
 ﻿networks:
   database:
+volumes:
+  database:
+  nginx:
 services:
   backend:
     image: educationmanagementsystem
@@ -8,13 +11,15 @@ services:
       dockerfile: EducationManagementSystem/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - 3000:8080
     networks:
       - database
   database:
     image: postgres
     restart: always
     volumes:
-      - ./database/:/var/lib/postgresql/data/
+      - database:/var/lib/postgresql/data/
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -34,7 +39,7 @@ services:
       - 4000:8080
     networks:
       - database
-    command: start-dev
+    command: start-dev --log-level=DEBUG
   adminer:
     image: adminer
     restart: always
@@ -46,6 +51,6 @@ services:
     image: nginx
     restart: always
     volumes:
-      - ./nginx:/etc/nginx/nginx
+      - nginx:/etc/nginx/nginx
     ports:
       - 8000:80

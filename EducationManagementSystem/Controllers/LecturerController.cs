@@ -5,7 +5,7 @@ namespace EducationManagementSystem.Controllers;
 [ApiController]
 public class LecturerController : ControllerBase
 {
-    public async Task<IActionResult> EliminateDebt()
+    /*public async Task<IActionResult> EliminateDebt()
     {
         return Ok();
     }
@@ -16,5 +16,5 @@ public class LecturerController : ControllerBase
     public async Task<IActionResult> MarkViaQrCode()
     {
         return Ok();
-    }
+    }*/
 }

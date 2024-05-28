@@ -14,10 +14,4 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Student> Students { get; set; }
     public DbSet<Subject> Subjects { get; set; }
     public DbSet<Template> Templates { get; set; }
-    public DbSet<TemplateGroup> TemplateGroups { get; set; }
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<TemplateGroup>().HasKey(x => new { x.TemplateId, x.GroupId });
-        base.OnModelCreating(modelBuilder);
-    }
 }

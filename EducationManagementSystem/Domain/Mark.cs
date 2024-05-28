@@ -6,5 +6,5 @@ public class Mark : BaseEntity
     public Lesson Lesson { get; set; } = default!;
     public Guid StudentId { get; set; }
     public Student Student { get; set; } = default!;
-    public MarkStatus Status { get; set; }
+    public bool Passed { get; set; }
 }
