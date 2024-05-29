@@ -14,4 +14,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Student> Students { get; set; }
     public DbSet<Subject> Subjects { get; set; }
     public DbSet<Template> Templates { get; set; }
+    public DbSet<MarkSession> MarkSessions { get; set; }
 }

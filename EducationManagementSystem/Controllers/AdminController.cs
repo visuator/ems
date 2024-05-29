@@ -1,42 +1,66 @@
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using EducationManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EducationManagementSystem.Controllers;
 
-public enum ImportType
-{
-    Organization,
-    Students,
-    Schedule
-}
-public class PublishScheduleDto
-{
-    public Guid VersionId { get; set; }
-}
 [ApiController]
 [Route("admin")]
 public class AdminController(AppDbContext dbContext, KeycloakService keycloakService, ImportService importService, ScheduleService scheduleService, GroupService groupService, MarkService markService) : ControllerBase
 {
+    public enum ImportType
+    {
+        Organization,
+        Students,
+        Schedule
+    }
+    public class PublishScheduleDto
+    {
+        public Guid VersionId { get; set; }
+    }
+    public class ReplaceLessonDto
+    {
+        public Guid LecturerId { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid ClassroomId { get; set; }
+    }
+    [Authorize(Roles = "admin")]
     [HttpPost("schedule")]
     public async Task<IActionResult> PublishSchedule([FromBody] PublishScheduleDto dto, CancellationToken token = default)
     {
         await scheduleService.Publish(dto.VersionId, token);
         return Ok();
     }
+    [Authorize(Roles = "admin")]
+    [HttpPost("replace/{lessonId:guid}")]
+    public async Task<IActionResult> ReplaceLesson(Guid lessonId, ReplaceLessonDto dto,
+        CancellationToken token = default)
+    {
+        await scheduleService.Replace(lessonId, new()
+        {
+            ClassroomId = dto.ClassroomId,
+            SubjectId = dto.SubjectId,
+            LecturerId = dto.LecturerId
+        }, token);
+        return Ok();
+    }
+    [Authorize(Roles = "admin")]
     [HttpGet("groups/{groupId:guid}")]
     public async Task<IActionResult> GetGroupInfo(Guid groupId, CancellationToken token = default)
     {
         return Ok(await groupService.GetInfo(groupId, token));
     }
+    [Authorize(Roles = "admin")]
     [HttpDelete("marks/{markId:guid}")]
     public async Task<IActionResult> RevokeMark(Guid markId, CancellationToken token = default)
     {
         await markService.Revoke(markId, token);
         return Ok();
     }
+    [Authorize(Roles = "admin")]
     [HttpPost("import")]
     public async Task<IActionResult> Import(IFormFile file, ImportType importType, CancellationToken token = default)
     {
@@ -101,12 +125,12 @@ public class AdminController(AppDbContext dbContext, KeycloakService keycloakSer
         }
         await dbContext.SaveChangesAsync(token);
     }
-    private static Dictionary<string, Quarter> _quarterMapper = new()
+    private static readonly Dictionary<string, Quarter> QuarterMapper = new()
     {
         ["1-я неделя"] = Quarter.First,
         ["2-я неделя"] = Quarter.Second
     };
-    private static Dictionary<string, DayOfWeek> _dayOfWeekMapper = new()
+    private static readonly Dictionary<string, DayOfWeek> DayOfWeekMapper = new()
     {
         ["Понедельник"] = DayOfWeek.Monday,
         ["Вторник"] = DayOfWeek.Tuesday,
@@ -140,8 +164,8 @@ public class AdminController(AppDbContext dbContext, KeycloakService keycloakSer
             {
                 Version = version,
                 ClassroomId = classroom.Id,
-                Quarter = _quarterMapper[template.QuarterName],
-                DayOfWeek = _dayOfWeekMapper[template.DayOfWeekName],
+                Quarter = QuarterMapper[template.QuarterName],
+                DayOfWeek = DayOfWeekMapper[template.DayOfWeekName],
                 GroupId = group.Id,
                 LecturerId = lecturer.Id,
                 PeriodId = period.Id,
