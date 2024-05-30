@@ -36,7 +36,7 @@ public class CreateMarksViaGpsJob(AppDbContext dbContext) : IJob
         {
             await dbContext.Marks.AddAsync(new Mark()
             {
-                StudentId = mark.StudentId ?? throw new Exception(),
+                StudentId = mark.PersonId,
                 LessonId = session.LessonId,
                 Passed = true
             });
@@ -51,58 +51,58 @@ public class CreateMarksViaGpsJob(AppDbContext dbContext) : IJob
     }
     private const int Clusters = 2;
     private static void Cluster(List<Point> dataPoints)
+    {
+        var centroids = InitializeRandomCentroids(dataPoints);
+        for (var iteration = 0; iteration < 1000; iteration++)
         {
-            var centroids = InitializeRandomCentroids(dataPoints);
-            for (var iteration = 0; iteration < 1000; iteration++)
+            // Assign data points to the nearest cluster
+            foreach (var dataPoint in dataPoints)
             {
-                // Assign data points to the nearest cluster
-                foreach (var dataPoint in dataPoints)
-                {
-                    var minDistance = double.MaxValue;
-                    var closestCluster = -1;
-                    for (var i = 0; i < Clusters; i++)
-                    {
-                        var distance = CalculateDistance(dataPoint, centroids[i]);
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            closestCluster = i;
-                        }
-                    }
-                    dataPoint.SelectedCluster = closestCluster;
-                }
-                // Update centroids
+                var minDistance = double.MaxValue;
+                var closestCluster = -1;
                 for (var i = 0; i < Clusters; i++)
                 {
-                    var clusterPoints = dataPoints
-                        .Where(p => p.SelectedCluster == i)
-                        .ToList();
-                    if (clusterPoints.Count <= 0)
-                        continue;
-                    var meanX = clusterPoints
-                            .Select(p => p.X)
-                            .Average();
-                    centroids[i] = new() { X = meanX };
+                    var distance = CalculateDistance(dataPoint, centroids[i]);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        closestCluster = i;
+                    }
                 }
+                dataPoint.SelectedCluster = closestCluster;
             }
-        }
-        private static List<Point> InitializeRandomCentroids(List<Point> dataPoints)
-        {
-            var centroids = new List<Point>();
+            // Update centroids
             for (var i = 0; i < Clusters; i++)
             {
-                var randomIndex = Random.Shared.Next(dataPoints.Count - 1);
-                centroids.Add(new()
-                {
-                    X = dataPoints[randomIndex].X,
-                    SelectedCluster = i
-                });
+                var clusterPoints = dataPoints
+                    .Where(p => p.SelectedCluster == i)
+                    .ToList();
+                if (clusterPoints.Count <= 0)
+                    continue;
+                var meanX = clusterPoints
+                    .Select(p => p.X)
+                    .Average();
+                centroids[i] = new() { X = meanX };
             }
-            return centroids;
         }
-        private static double CalculateDistance(Point a, Point b)
+    }
+    private static List<Point> InitializeRandomCentroids(List<Point> dataPoints)
+    {
+        var centroids = new List<Point>();
+        for (var i = 0; i < Clusters; i++)
         {
-            var dx = a.X - b.X;
-            return Math.Sqrt(dx * dx);
+            var randomIndex = Random.Shared.Next(dataPoints.Count - 1);
+            centroids.Add(new()
+            {
+                X = dataPoints[randomIndex].X,
+                SelectedCluster = i
+            });
         }
+        return centroids;
+    }
+    private static double CalculateDistance(Point a, Point b)
+    {
+        var dx = a.X - b.X;
+        return Math.Sqrt(dx * dx);
+    }
 }

@@ -1,19 +1,29 @@
+using System.Security.Cryptography;
+using System.Text;
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace EducationManagementSystem.Services;
 
-public class QrCodeSessionDto
-{
-    
-}
 public class GpsPointDto
 {
     public double Latitude { get; set; }
     public double Longitude { get; set; }
+    public Guid PersonId { get; set; }
 }
-public class MarkService(AppDbContext dbContext)
+public class QrCodeDto
+{
+    public Guid SessionId { get; set; }
+    public string? Content { get; set; }
+    public bool Final { get; set; }
+}
+public class QrCodeMarkDto
+{
+    public Guid SessionId { get; set; }
+    public string Content { get; set; } = default!;
+}
+public class MarkService(AppDbContext dbContext, IConfiguration configuration)
 {
     public async Task Revoke(Guid markId, CancellationToken token = default)
     {
@@ -25,17 +35,17 @@ public class MarkService(AppDbContext dbContext)
     }
     public async Task<(Guid Id, DateTime ExpiresAt)> CreateGpsSession(DateTime requestedAt, Guid lessonId, GpsPointDto dto, CancellationToken token = default)
     {
-        var startAt = requestedAt;
-        var expiresAt = requestedAt.AddMinutes(5);
+        var expiresAt = requestedAt.Add(configuration.GetSection("MarkSettings:GpsSessionExpiration").Get<TimeSpan>());
         var session = new GpsMarkSession()
         {
             LessonId = lessonId,
             Source = new()
             {
                 Longitude = dto.Longitude,
-                Latitude = dto.Latitude
+                Latitude = dto.Latitude,
+                PersonId = dto.PersonId
             },
-            StartAt = startAt,
+            StartAt = requestedAt,
             EndAt = expiresAt
         };
         await dbContext.MarkSessions.AddAsync(session, token);
@@ -58,7 +68,73 @@ public class MarkService(AppDbContext dbContext)
         });
         await dbContext.SaveChangesAsync(token);
     }
-    public async Task CreateQrCodeSession(Guid lessonId, Guid studentId, CancellationToken token = default)
+    public async Task<Guid> CreateQrCodeSession(DateTime requestedAt, Guid lessonId, Guid studentId, CancellationToken token = default)
     {
+        var offset = configuration.GetSection("MarkSettings:QrCodeSessionExpiration").Get<TimeSpan>();
+        var expiresAt = requestedAt.Add(offset);
+        var session = new QrCodeMarkSession()
+        {
+            LessonId = lessonId,
+            StudentId = studentId,
+            StartAt = requestedAt,
+            EndAt = expiresAt,
+            QrCodes = []
+        };
+        var count = configuration.GetSection("MarkSettings:QrCodeCount").Get<int>();
+        for (var i = 0; i < count; i++)
+        {
+            session.QrCodes.Add(new()
+            {
+                Content = RandomHash(),
+                ExpiresAt = requestedAt.AddSeconds(offset.Seconds / (double)count * i)
+            });
+        }
+        await dbContext.SaveChangesAsync(token);
+        return session.Id;
+    }
+    public async Task MarkViaQr(DateTime requestedAt, QrCodeMarkDto dto, CancellationToken token = default)
+    {
+        var session = await dbContext.MarkSessions
+            .Where(x => x.Id == dto.SessionId)
+            .OfType<QrCodeMarkSession>()
+            .Include(x => x.QrCodes)
+            .SingleAsync(token);
+        if (session.Completed)
+            throw new Exception();
+        var current = session.QrCodes.Single(x => x.Content == dto.Content);
+        if (requestedAt > current.ExpiresAt)
+            throw new Exception();
+        session.Completed = true;
+        await dbContext.Marks.AddAsync(new()
+        {
+            StudentId = session.StudentId,
+            LessonId = session.LessonId,
+            Passed = true
+        }, token);
+        await dbContext.SaveChangesAsync(token);
+    }
+    private static string RandomHash()
+    {
+        Span<byte> hashBytes = stackalloc byte[32];
+        RandomNumberGenerator.Fill(hashBytes);
+        return Encoding.UTF8.GetString(hashBytes);
+    }
+    public async Task<QrCodeDto> GetNextQrCode(Guid sessionId, CancellationToken token)
+    {
+        var session = await dbContext.MarkSessions
+            .Where(x => x.Id == sessionId)
+            .OfType<QrCodeMarkSession>()
+            .Include(x => x.QrCodes)
+            .SingleAsync(token);
+        var final = session.Index < session.QrCodes.Count;
+        var dto = new QrCodeDto()
+        {
+            SessionId = sessionId,
+            Content = final ? null : session.QrCodes[session.Index].Content,
+            Final = final,
+        };
+        session.Index++;
+        await dbContext.SaveChangesAsync(token);
+        return dto;
     }
 }

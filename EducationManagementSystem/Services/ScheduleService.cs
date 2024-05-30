@@ -6,6 +6,21 @@ namespace EducationManagementSystem.Services;
 
 public class ScheduleService(AppDbContext dbContext)
 {
+    public class LessonInfoDto
+    {
+        public class LessonFlowDto
+        {
+            public string Theme { get; set; } = default!;
+            public string Resources { get; set; } = default!;
+        }
+        public DateTime StartAt { get; set; }
+        public DateTime EndAt { get; set; }
+        public Guid LecturerId { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid ClassroomId { get; set; }
+        public Guid GroupId { get; set; }
+        public LessonFlowDto? Flow { get; set; }
+    }
     public class ReplaceDto
     {
         public Guid LecturerId { get; set; }
@@ -37,5 +52,32 @@ public class ScheduleService(AppDbContext dbContext)
         };
         await dbContext.Lessons.AddAsync(lesson, token);
         await dbContext.SaveChangesAsync(token);
+    }
+    public async Task<List<LessonInfoDto>> GetLatest(DateTime requestedAt, CancellationToken token = default)
+    {
+        var lessons = await dbContext.Lessons
+            .Where(x => requestedAt.Date == x.StartAt.Date)
+            .GroupBy(x => x.StartAt)
+            .Select(x => x
+                .OrderByDescending(c => c.CreatedAt)
+                .First())
+            .Select(x => new LessonInfoDto()
+            {
+                ClassroomId = x.ClassroomId,
+                SubjectId = x.SubjectId,
+                GroupId = x.GroupId,
+                LecturerId = x.LecturerId,
+                StartAt = x.StartAt,
+                EndAt = x.EndAt,
+                Flow = x.Flow == null
+                    ? null
+                    : new LessonInfoDto.LessonFlowDto()
+                    {
+                        Theme = x.Flow.Theme,
+                        Resources = x.Flow.Resources
+                    }
+            })
+            .ToListAsync(token);
+        return lessons;
     }
 }

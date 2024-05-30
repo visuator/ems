@@ -12,6 +12,7 @@ public class Lesson : BaseEntity
     public Classroom Classroom { get; set; } = default!;
     public Guid GroupId { get; set; }
     public Group Group { get; set; } = default!;
-    public LessonFlow Flow { get; set; } = default!;
+    public LessonFlow? Flow { get; set; }
     public List<MarkSession> Sessions { get; set; } = default!;
+    public List<Mark> Marks { get; set; } = default!;
 }
