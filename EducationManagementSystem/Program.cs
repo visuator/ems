@@ -30,7 +30,7 @@ builder.Services.AddQuartz(x =>
         c.UseNewtonsoftJsonSerializer();
     });
 });
-builder.Services.AddQuartzHostedService();
+//builder.Services.AddQuartzHostedService();
 builder.Services.AddCors(x =>
 {
     x.AddDefaultPolicy(c =>
