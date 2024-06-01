@@ -15,4 +15,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Subject> Subjects { get; set; }
     public DbSet<Template> Templates { get; set; }
     public DbSet<MarkSession> MarkSessions { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<MarkSession>()
+            .HasDiscriminator()
+            .HasValue<GpsMarkSession>("gps_mark_session")
+            .HasValue<QrCodeMarkSession>("qr_code_mark_session");
+        base.OnModelCreating(modelBuilder);
+    }
 }

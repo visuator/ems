@@ -1,3 +1,4 @@
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using EducationManagementSystem.Services;
@@ -11,30 +12,14 @@ namespace EducationManagementSystem.Controllers;
 [Route("admin")]
 public class AdminController(AppDbContext dbContext, KeycloakService keycloakService, ImportService importService, ScheduleService scheduleService, GroupService groupService, MarkService markService) : ControllerBase
 {
-    public enum ImportType
-    {
-        Organization,
-        Students,
-        Schedule
-    }
-    public class PublishScheduleDto
-    {
-        public Guid VersionId { get; set; }
-    }
-    public class ReplaceLessonDto
-    {
-        public Guid LecturerId { get; set; }
-        public Guid SubjectId { get; set; }
-        public Guid ClassroomId { get; set; }
-    }
-    [Authorize(Roles = "admin")]
+    [Authorize("admin")]
     [HttpPost("schedule")]
     public async Task<IActionResult> PublishSchedule([FromBody] PublishScheduleDto dto, CancellationToken token = default)
     {
         await scheduleService.Publish(dto.VersionId, token);
         return Ok();
     }
-    [Authorize(Roles = "admin")]
+    [Authorize("admin")]
     [HttpPost("replace/{lessonId:guid}")]
     public async Task<IActionResult> ReplaceLesson(Guid lessonId, ReplaceLessonDto dto,
         CancellationToken token = default)
@@ -47,13 +32,13 @@ public class AdminController(AppDbContext dbContext, KeycloakService keycloakSer
         }, token);
         return Ok();
     }
-    [Authorize(Roles = "admin")]
+    [Authorize("admin")]
     [HttpGet("groups/{groupId:guid}")]
     public async Task<IActionResult> GetGroupInfo(Guid groupId, CancellationToken token = default)
     {
         return Ok(await groupService.GetInfo(groupId, token));
     }
-    [Authorize(Roles = "admin")]
+    [Authorize("admin")]
     [HttpDelete("marks/{markId:guid}")]
     public async Task<IActionResult> RevokeMark(Guid markId, CancellationToken token = default)
     {

@@ -1,19 +1,9 @@
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace EducationManagementSystem.Services;
 
-public class GroupInfoDto
-{
-    public string Name { get; set; } = default!;
-    public List<MarkDto> Marks { get; set; } = default!;
-}
-public class MarkDto
-{
-    public Guid? Id { get; set; }
-    public Guid StudentId { get; set; }
-    public bool Passed { get; set; }
-}
 public class GroupService(AppDbContext dbContext)
 {
     public async Task<GroupInfoDto> GetInfo(Guid groupId, CancellationToken token = default)

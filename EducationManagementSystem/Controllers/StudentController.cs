@@ -1,3 +1,4 @@
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using EducationManagementSystem.Services;
@@ -11,25 +12,11 @@ namespace EducationManagementSystem.Controllers;
 [Route("students")]
 public class StudentController(AppDbContext dbContext, MarkService markService, LessonService lessonService) : ControllerBase
 {
-    public class GpsPointDto
-    {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-    }
-    public class QrCodeDto
-    {
-        public Guid SessionId { get; set; }
-        public string Content { get; set; } = default!;
-    }
     [Authorize(Roles = "student")]
     [HttpPost("qr")]
-    public async Task<IActionResult> MarkViaQrCode(QrCodeDto dto, CancellationToken token = default)
+    public async Task<IActionResult> MarkViaQrCode(QrCodeContentDto dto, CancellationToken token = default)
     {
-        await markService.MarkViaQr(RequestedAt, new()
-        {
-            Content = dto.Content,
-            SessionId = dto.SessionId
-        }, token);
+        await markService.MarkViaQr(RequestedAt, dto, token);
         return Ok();
     }
     [Authorize(Roles = "student")]
@@ -37,12 +24,8 @@ public class StudentController(AppDbContext dbContext, MarkService markService, 
     public async Task<IActionResult> MarkViaGps(GpsPointDto dto, CancellationToken token = default)
     {
         var lesson = await GetCurrentLesson();
-        await markService.MarkViaGps(RequestedAt, lesson.Id, new()
-        {
-            Longitude = dto.Longitude,
-            Latitude = dto.Latitude,
-            PersonId = Current
-        }, token);
+        dto.PersonId = Current;
+        await markService.MarkViaGps(RequestedAt, lesson.Id, dto, token);
         return Ok();
     }
     [Authorize(Roles = "student")]

@@ -1,3 +1,4 @@
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,15 +6,6 @@ namespace EducationManagementSystem.Services;
 
 public class LessonService(AppDbContext dbContext)
 {
-    public class SetFlowDto
-    {
-        public string Theme { get; set; } = default!;
-        public string Resources { get; set; } = default!;
-    }
-    public class DebtDto
-    {
-        public Guid LessonId { get; set; }
-    }
     public async Task EliminateDebt(Guid lessonId, Guid studentId, CancellationToken token = default)
     {
         await dbContext.Marks.AddAsync(new()
@@ -33,7 +25,7 @@ public class LessonService(AppDbContext dbContext)
                 LessonId = x.Id
             })
             .ToListAsync(token);
-    public async Task SetFlow(Guid lessonId, SetFlowDto dto, CancellationToken token = default)
+    public async Task SetFlow(Guid lessonId, LessonFlowDto dto, CancellationToken token = default)
     {
         var lesson = await dbContext.Lessons
             .Where(x => x.Id == lessonId)

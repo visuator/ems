@@ -1,3 +1,4 @@
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -6,27 +7,6 @@ namespace EducationManagementSystem.Services;
 
 public class ScheduleService(AppDbContext dbContext)
 {
-    public class LessonInfoDto
-    {
-        public class LessonFlowDto
-        {
-            public string Theme { get; set; } = default!;
-            public string Resources { get; set; } = default!;
-        }
-        public DateTime StartAt { get; set; }
-        public DateTime EndAt { get; set; }
-        public Guid LecturerId { get; set; }
-        public Guid SubjectId { get; set; }
-        public Guid ClassroomId { get; set; }
-        public Guid GroupId { get; set; }
-        public LessonFlowDto? Flow { get; set; }
-    }
-    public class ReplaceDto
-    {
-        public Guid LecturerId { get; set; }
-        public Guid SubjectId { get; set; }
-        public Guid ClassroomId { get; set; }
-    }
     public async Task Publish(Guid version, CancellationToken token = default)
     {
         var templates = await dbContext.Templates
@@ -38,7 +18,7 @@ public class ScheduleService(AppDbContext dbContext)
         }
         await dbContext.SaveChangesAsync(token);
     }
-    public async Task Replace(Guid lessonId, ReplaceDto dto, CancellationToken token = default)
+    public async Task Replace(Guid lessonId, ReplaceLessonDto dto, CancellationToken token = default)
     {
         var source = await dbContext.Lessons
             .Where(x => x.Id == lessonId)
@@ -71,7 +51,7 @@ public class ScheduleService(AppDbContext dbContext)
                 EndAt = x.EndAt,
                 Flow = x.Flow == null
                     ? null
-                    : new LessonInfoDto.LessonFlowDto()
+                    : new LessonFlowDto()
                     {
                         Theme = x.Flow.Theme,
                         Resources = x.Flow.Resources

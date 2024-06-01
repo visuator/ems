@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using EducationManagementSystem.Jobs;
@@ -15,32 +16,6 @@ namespace EducationManagementSystem.Controllers;
 [Route("lecturer")]
 public class LecturerController(AppDbContext dbContext, ISchedulerFactory schedulerFactory, LessonService lessonService, MarkService markService) : ControllerBase
 {
-    public class FlowDto
-    {
-        public string Theme { get; set; } = default!;
-        public string Resources { get; set; } = default!;
-    }
-    public class EliminateDebtDto
-    {
-        public Guid StudentId { get; set; }
-    }
-    public class GpsPointDto
-    {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-    }
-    public class GpsSessionDto
-    {
-        public DateTime ExpiresAt { get; set; }
-    }
-    public class QrCodeSessionDto
-    {
-        public Guid Id { get; set; }
-    }
-    public class QrCodeDto
-    {
-        public byte[] Image { get; set; }
-    }
     [Authorize(Roles = "lecturer")]
     [HttpDelete("debts/{lessonId:guid}")]
     public async Task<IActionResult> EliminateDebt(Guid lessonId, [FromBody] EliminateDebtDto dto, CancellationToken token = default)
@@ -50,7 +25,7 @@ public class LecturerController(AppDbContext dbContext, ISchedulerFactory schedu
     }
     [Authorize(Roles = "lecturer")]
     [HttpPost("flow/{lessonId:guid}")]
-    public async Task<IActionResult> SetFlow(Guid lessonId, FlowDto dto, CancellationToken token = default)
+    public async Task<IActionResult> SetFlow(Guid lessonId, LessonFlowDto dto, CancellationToken token = default)
     {
         await lessonService.SetFlow(lessonId, new()
         {
@@ -104,7 +79,7 @@ public class LecturerController(AppDbContext dbContext, ISchedulerFactory schedu
         var qrCode = await markService.GetNextQrCode(sessionId, token);
         var image = new PngByteQRCode(QRCodeGenerator.GenerateQrCode(JsonSerializer.Serialize(qrCode),
             QRCodeGenerator.ECCLevel.Q)).GetGraphic(128);
-        return Ok(new QrCodeDto()
+        return Ok(new QrCodeImageDto()
         {
             Image = image
         });

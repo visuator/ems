@@ -22,8 +22,8 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/rider-debugger/backend-log.xml"
     image: "educationmanagementsystem:dev"
     ports:
-    - "127.0.0.1:57002:57100"
-    - "127.0.0.1:63672:57300"
+    - "127.0.0.1:57026:57100"
+    - "127.0.0.1:57226:57300"
     volumes:
     - "C:\\Users\\Workstation\\.nuget\\packages:/home/app/.nuget/packages"
     - "C:\\Users\\Workstation\\RiderProjects\\EducationManagementSystem\\EducationManagementSystem:/app:rw"
@@ -32,5 +32,5 @@ services:
       Linux64:/opt/rider-debugger"
     - "C:\\Program Files\\JetBrains\\JetBrains Rider 2024.1.2\\bin:/etc/opt/rider-debugger/backend-log.xml"
     - "C:\\Users\\Workstation\\AppData\\Local\\JetBrains\\Rider2024.1\\log\\DebuggerWorker\\\
-      JetBrains.Debugger.Worker.2024_5_28_20_39_26:/var/opt/rider-debugger:rw"
+      JetBrains.Debugger.Worker.2024_6_01_14_43_51:/var/opt/rider-debugger:rw"
     working_dir: "/app"

@@ -1,12 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
+using EducationManagementSystem.Controllers.Dtos;
 
 namespace EducationManagementSystem.Services;
 
-public class RegisterDto
-{
-    public string Email { get; set; } = default!;
-}
 public class KeycloakService(IConfiguration configuration, HttpClient keycloakHttpClient)
 {
     private class UserRepresentation

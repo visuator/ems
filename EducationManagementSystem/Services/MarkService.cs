@@ -1,28 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
+using EducationManagementSystem.Controllers.Dtos;
 using EducationManagementSystem.Domain;
 using EducationManagementSystem.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace EducationManagementSystem.Services;
 
-public class GpsPointDto
-{
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public Guid PersonId { get; set; }
-}
-public class QrCodeDto
-{
-    public Guid SessionId { get; set; }
-    public string? Content { get; set; }
-    public bool Final { get; set; }
-}
-public class QrCodeMarkDto
-{
-    public Guid SessionId { get; set; }
-    public string Content { get; set; } = default!;
-}
 public class MarkService(AppDbContext dbContext, IConfiguration configuration)
 {
     public async Task Revoke(Guid markId, CancellationToken token = default)
@@ -92,7 +76,7 @@ public class MarkService(AppDbContext dbContext, IConfiguration configuration)
         await dbContext.SaveChangesAsync(token);
         return session.Id;
     }
-    public async Task MarkViaQr(DateTime requestedAt, QrCodeMarkDto dto, CancellationToken token = default)
+    public async Task MarkViaQr(DateTime requestedAt, QrCodeContentDto dto, CancellationToken token = default)
     {
         var session = await dbContext.MarkSessions
             .Where(x => x.Id == dto.SessionId)
@@ -119,7 +103,7 @@ public class MarkService(AppDbContext dbContext, IConfiguration configuration)
         RandomNumberGenerator.Fill(hashBytes);
         return Encoding.UTF8.GetString(hashBytes);
     }
-    public async Task<QrCodeDto> GetNextQrCode(Guid sessionId, CancellationToken token)
+    public async Task<QrCodeContentDto> GetNextQrCode(Guid sessionId, CancellationToken token)
     {
         var session = await dbContext.MarkSessions
             .Where(x => x.Id == sessionId)
@@ -127,7 +111,7 @@ public class MarkService(AppDbContext dbContext, IConfiguration configuration)
             .Include(x => x.QrCodes)
             .SingleAsync(token);
         var final = session.Index < session.QrCodes.Count;
-        var dto = new QrCodeDto()
+        var dto = new QrCodeContentDto()
         {
             SessionId = sessionId,
             Content = final ? null : session.QrCodes[session.Index].Content,
